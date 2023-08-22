@@ -1,0 +1,87 @@
+# Maintainer: Alexey Pavlov <alexpux@gmail.com>
+
+_realname=curl
+pkgbase=mingw-w64-${_realname}
+pkgname=${MINGW_PACKAGE_PREFIX}-${_realname}
+pkgver=8.2.1
+pkgrel=1
+pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
+arch=('any')
+mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
+url="https://curl.se/"
+license=("spdx:MIT")
+makedepends=("${MINGW_PACKAGE_PREFIX}-cc"
+             "${MINGW_PACKAGE_PREFIX}-autotools")
+depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
+         "${MINGW_PACKAGE_PREFIX}-libidn2"
+         "${MINGW_PACKAGE_PREFIX}-zlib"
+		 "${MINGW_PACKAGE_PREFIX}-ca-certificates"
+		 "${MINGW_PACKAGE_PREFIX}-openssl")
+source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//./_}/${_realname}-${pkgver}.tar.xz"
+        "pathtools.c"
+        "pathtools.h"
+        "0001-Make-cURL-relocatable.patch")
+sha256sums=('dd322f6bd0a20e6cebdfd388f69e98c3d183bed792cf4713c8a7ef498cba4894'
+            '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
+            '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6'
+            'c4e6bfd5b58f944d75293128effbd22fe42ee0131b915d9230ceb3c004c0322d')
+
+apply_patch_with_msg() {
+  for _patch in "$@"
+  do
+    msg2 "Applying ${_patch}"
+    patch -Nbp1 -i "${srcdir}/${_patch}"
+  done
+}
+
+prepare() {
+  test ! -d "${startdir}/../mingw-w64-pathtools" || {
+    cmp "${startdir}/../mingw-w64-pathtools/pathtools.c" "${srcdir}/pathtools.c" &&
+    cmp "${startdir}/../mingw-w64-pathtools/pathtools.h" "${srcdir}/pathtools.h"
+  } || exit 1
+
+  cd "${srcdir}/${_realname}-${pkgver}"
+  cp -fHv "${srcdir}"/pathtools.[ch] lib/
+
+  apply_patch_with_msg \
+    0001-Make-cURL-relocatable.patch
+
+  autoreconf -vfi
+}
+
+build() {
+  _variant=$1
+  _destdir="${srcdir}/build-${MSYSTEM}"
+
+  msg2 "Building shared library"
+  mkdir -p "${_destdir}-shared" && cd "${_destdir}-shared"
+  ../${_realname}-${pkgver}/configure \
+    --prefix=${MINGW_PREFIX} \
+    --build=${MINGW_CHOST} \
+    --host=${MINGW_CHOST} \
+    --target=${MINGW_CHOST} \
+    --without-random \
+    --enable-{shared,sspi} \
+    --disable-{pthreads,static,proxy,ftp,hsts,doh,smb,ldap,ldaps,rstp,dict,telnet,tftp,pop3,imap,smtp,gopher,mqtt} \
+	--without-{brotli,librtmp,libpsl,nghttp2,zstd} \
+	--with-default-ssl-backend=openssl \
+	--with-{openssl,schannel} \
+	--with-ca-bundle=${MINGW_PREFIX}/etc/ssl/certs/ca-bundle.crt
+
+  sed -i "s|\/curl > \$\@|\/curl\$\{EXEEXT\} > \$\@|" scripts/Makefile
+  make -j8
+}
+
+package() {
+  cd "${srcdir}/build-${MSYSTEM}$1-shared"
+  make DESTDIR="${pkgdir}" install
+
+  local PREFIX_DEPS=$(cygpath -am ${MINGW_PREFIX})
+  sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ${pkgdir}${MINGW_PREFIX}/bin/curl-config
+  sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/libcurl.pc
+
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
+}
+
+# template start; name=mingw-w64-splitpkg-wrappers; version=1.0;
+# vim: set ft=bash :
