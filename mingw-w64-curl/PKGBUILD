@@ -3,8 +3,8 @@
 _realname=curl
 pkgbase=mingw-w64-${_realname}
 pkgname=${MINGW_PACKAGE_PREFIX}-${_realname}
-pkgver=8.2.1
-pkgrel=1
+pkgver=8.4.0
+pkgrel=2
 pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
 arch=('any')
 mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
@@ -21,10 +21,10 @@ source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//.
         "pathtools.c"
         "pathtools.h"
         "0001-Make-cURL-relocatable.patch")
-sha256sums=('dd322f6bd0a20e6cebdfd388f69e98c3d183bed792cf4713c8a7ef498cba4894'
-            '08209cbf1633fa92eae7e5d28f95f8df9d6184cc20fa878c99aec4709bb257fd'
-            '965d3921ec4fdeec94a2718bc2c85ce5e1a00ea0e499330a554074a7ae15dfc6'
-            'c4e6bfd5b58f944d75293128effbd22fe42ee0131b915d9230ceb3c004c0322d')
+sha256sums=('16c62a9c4af0f703d28bda6d7bbf37ba47055ad3414d70dec63e2e6336f2a82d'
+            'ebf471173f5ee9c4416c10a78760cea8afaf1a4a6e653977321e8547ce7bf3c0'
+            'e1944d0dcd7837cb25c31832e785c6176916cd42a446ca2f9057a450afafab4a'
+            '42bfa4c589e87a04d68ae4675f8200570f414ef363067015b159af91f3a94232')
 
 apply_patch_with_msg() {
   for _patch in "$@"
@@ -81,7 +81,6 @@ package() {
   sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/libcurl.pc
 
   install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
+  
+  rm -rf "${pkgdir}${MINGW_PREFIX}/share/man/"
 }
-
-# template start; name=mingw-w64-splitpkg-wrappers; version=1.0;
-# vim: set ft=bash :
