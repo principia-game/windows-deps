@@ -3,7 +3,7 @@
 _realname=curl
 pkgbase=mingw-w64-${_realname}
 pkgname=${MINGW_PACKAGE_PREFIX}-${_realname}-winssl
-pkgver=8.5.0
+pkgver=8.6.0
 pkgrel=1
 pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
 arch=('any')
@@ -12,43 +12,29 @@ url="https://curl.se/"
 license=("spdx:MIT")
 provides=("${MINGW_PACKAGE_PREFIX}-${_realname}")
 makedepends=("${MINGW_PACKAGE_PREFIX}-cc"
-             "${MINGW_PACKAGE_PREFIX}-autotools")
+             "${MINGW_PACKAGE_PREFIX}-cmake")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
          "${MINGW_PACKAGE_PREFIX}-zlib")
 source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//./_}/${_realname}-${pkgver}.tar.xz")
-sha256sums=('42ab8db9e20d8290a3b633e7fbb3cec15db34df65fd1015ef8ac1e4723750eeb')
+sha256sums=('3ccd55d91af9516539df80625f818c734dc6f2ecf9bada33c76765e99121db15')
 
 build() {
   _variant=$1
   _destdir="${srcdir}/build-${MSYSTEM}"
 
-  msg2 "Building shared library"
-  mkdir -p "${_destdir}-shared" && cd "${_destdir}-shared"
-  ../${_realname}-${pkgver}/configure \
-    --prefix=${MINGW_PREFIX} \
-    --build=${MINGW_CHOST} \
-    --host=${MINGW_CHOST} \
-    --target=${MINGW_CHOST} \
-    --without-random \
-    --enable-{shared,sspi} \
-    --disable-{pthreads,static,proxy,ftp,hsts,doh,smb,ldap,ldaps,rstp,dict,telnet,tftp,pop3,imap,smtp,gopher,mqtt} \
-	--without-{brotli,librtmp,libpsl,nghttp2,zstd,libidn2} \
-	--without-ca-{bundle,path} \
-	--with-schannel \
+  mkdir -p "${_destdir}" && cd "${_destdir}"
+   
+  MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
+	"${MINGW_PREFIX}"/bin/cmake.exe ../curl-${pkgver} \
+	  -DCMAKE_INSTALL_PREFIX="${MINGW_PREFIX}" \
+      -DCURL_DISABLE_{ALTSVC,AWS,BASIC_AUTH,BEARER_AUTH,BINDLOCAL,DICT,DIGEST_AUTH,DOH,FTP,GOPHER,HSTS,IMAP,KERBEROS_AUTH,LDAP,LDAPS,MQTT,NEGOTIATE_AUTH,NTLM,PARSEDATE,POP3,RTSP,SMB,SMTP,SOCKETPAIR,SRP,TELNET,TFTP}=ON \
+      -DCURL_USE_LIBSSH2=OFF -DCURL_USE_SCHANNEL=ON -DUSE_LIBIDN2=OFF \
+      -G Ninja
 
-  sed -i "s|\/curl > \$\@|\/curl\$\{EXEEXT\} > \$\@|" scripts/Makefile
-  make -j8
+  "${MINGW_PREFIX}"/bin/cmake.exe --build .
 }
 
 package() {
-  cd "${srcdir}/build-${MSYSTEM}$1-shared"
-  make DESTDIR="${pkgdir}" install
-
-  local PREFIX_DEPS=$(cygpath -am ${MINGW_PREFIX})
-  sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ${pkgdir}${MINGW_PREFIX}/bin/curl-config
-  sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/libcurl.pc
-
-  install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
-  
-  rm -rf "${pkgdir}${MINGW_PREFIX}/share/man/"
+  cd "${srcdir}/build-${MSYSTEM}"
+  DESTDIR="${pkgdir}" "${MINGW_PREFIX}"/bin/cmake.exe --install .
 }
