@@ -4,7 +4,7 @@ _realname=curl
 pkgbase=mingw-w64-${_realname}
 pkgname=${MINGW_PACKAGE_PREFIX}-${_realname}-winssl
 pkgver=8.6.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
 arch=('any')
 mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
@@ -28,7 +28,8 @@ build() {
 	"${MINGW_PREFIX}"/bin/cmake.exe ../curl-${pkgver} \
 	  -DCMAKE_INSTALL_PREFIX="${MINGW_PREFIX}" \
       -DCURL_DISABLE_{ALTSVC,AWS,BASIC_AUTH,BEARER_AUTH,BINDLOCAL,DICT,DIGEST_AUTH,DOH,FTP,GOPHER,HSTS,IMAP,KERBEROS_AUTH,LDAP,LDAPS,MQTT,NEGOTIATE_AUTH,NTLM,PARSEDATE,POP3,RTSP,SMB,SMTP,SOCKETPAIR,SRP,TELNET,TFTP}=ON \
-      -DCURL_USE_LIBSSH2=OFF -DCURL_USE_SCHANNEL=ON -DUSE_LIBIDN2=OFF \
+      -DCURL_USE_{LIBPSL,LIBSSH2}=OFF -DCURL_USE_SCHANNEL=ON -DUSE_LIBIDN2=OFF \
+	  -DLIBCURL_OUTPUT_NAME=libcurl-4 \
       -G Ninja
 
   "${MINGW_PREFIX}"/bin/cmake.exe --build .
@@ -37,4 +38,10 @@ build() {
 package() {
   cd "${srcdir}/build-${MSYSTEM}"
   DESTDIR="${pkgdir}" "${MINGW_PREFIX}"/bin/cmake.exe --install .
+  
+  local PREFIX_DEPS=$(cygpath -am ${MINGW_PREFIX})
+  sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ${pkgdir}${MINGW_PREFIX}/bin/curl-config
+  sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/libcurl.pc
+  
+  mv "${pkgdir}${MINGW_PREFIX}"/lib/libcurl-4.dll.a "${pkgdir}${MINGW_PREFIX}"/lib/libcurl.dll.a 
 }
