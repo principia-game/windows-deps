@@ -3,8 +3,8 @@
 _realname=curl
 pkgbase=mingw-w64-${_realname}
 pkgname=${MINGW_PACKAGE_PREFIX}-${_realname}-winssl
-pkgver=8.6.0
-pkgrel=2
+pkgver=8.8.0
+pkgrel=10
 pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
 arch=('any')
 mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
@@ -15,8 +15,19 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-cc"
              "${MINGW_PACKAGE_PREFIX}-cmake")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
          "${MINGW_PACKAGE_PREFIX}-zlib")
-source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//./_}/${_realname}-${pkgver}.tar.xz")
-sha256sums=('3ccd55d91af9516539df80625f818c734dc6f2ecf9bada33c76765e99121db15')
+source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//./_}/${_realname}-${pkgver}.tar.xz"
+        "0002-fix-cmake-curl-libraries.patch"
+        "0003-enable-soversion-on-mingw.patch")
+sha256sums=('0f58bb95fc330c8a46eeb3df5701b0d90c9d9bfcc42bd1cd08791d12551d4400'
+            '1dd8aa976682aa498c8374d2554b1d0cf4c54bdf8600f712c490a00210038e01'
+            'a302bcc8bfc78ca474bfeea2dd4fe819331625d9f45e42c62f5adc3f96368310')
+
+prepare() {
+  cd "${srcdir}/${_realname}-${pkgver}"
+
+  patch -Nbp1 -i "${srcdir}/0002-fix-cmake-curl-libraries.patch"
+  patch -Nbp1 -i "${srcdir}/0003-enable-soversion-on-mingw.patch"
+}
 
 build() {
   _variant=$1
@@ -25,11 +36,11 @@ build() {
   mkdir -p "${_destdir}" && cd "${_destdir}"
    
   MSYS2_ARG_CONV_EXCL="-DCMAKE_INSTALL_PREFIX=" \
-	"${MINGW_PREFIX}"/bin/cmake.exe ../curl-${pkgver} \
-	  -DCMAKE_INSTALL_PREFIX="${MINGW_PREFIX}" \
+    "${MINGW_PREFIX}"/bin/cmake.exe ../curl-${pkgver} \
+      -DCMAKE_INSTALL_PREFIX="${MINGW_PREFIX}" \
+      -DCMAKE_DLL_NAME_WITH_SOVERSION=ON \
       -DCURL_DISABLE_{ALTSVC,AWS,BASIC_AUTH,BEARER_AUTH,BINDLOCAL,DICT,DIGEST_AUTH,DOH,FTP,GOPHER,HSTS,IMAP,KERBEROS_AUTH,LDAP,LDAPS,MQTT,NEGOTIATE_AUTH,NTLM,PARSEDATE,POP3,RTSP,SMB,SMTP,SOCKETPAIR,SRP,TELNET,TFTP}=ON \
       -DCURL_USE_{LIBPSL,LIBSSH2}=OFF -DCURL_USE_SCHANNEL=ON -DUSE_LIBIDN2=OFF \
-	  -DLIBCURL_OUTPUT_NAME=libcurl-4 \
       -G Ninja
 
   "${MINGW_PREFIX}"/bin/cmake.exe --build .
@@ -43,5 +54,5 @@ package() {
   sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ${pkgdir}${MINGW_PREFIX}/bin/curl-config
   sed -s "s|${PREFIX_DEPS}|${MINGW_PREFIX}|g" -i ${pkgdir}${MINGW_PREFIX}/lib/pkgconfig/libcurl.pc
   
-  mv "${pkgdir}${MINGW_PREFIX}"/lib/libcurl-4.dll.a "${pkgdir}${MINGW_PREFIX}"/lib/libcurl.dll.a 
+  install -Dm644 "${srcdir}/${_realname}-${pkgver}/COPYING" "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
 }
