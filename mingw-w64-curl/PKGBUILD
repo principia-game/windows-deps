@@ -15,16 +15,8 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-cc"
              "${MINGW_PACKAGE_PREFIX}-cmake")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
          "${MINGW_PACKAGE_PREFIX}-zlib")
-source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//./_}/${_realname}-${pkgver}.tar.xz"
-        "0003-enable-soversion-on-mingw.patch")
-sha256sums=('f292f6cc051d5bbabf725ef85d432dfeacc8711dd717ea97612ae590643801e5'
-            'SKIP')
-
-prepare() {
-  cd "${srcdir}/${_realname}-${pkgver}"
-
-  patch -Nbp1 -i "${srcdir}/0003-enable-soversion-on-mingw.patch"
-}
+source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//./_}/${_realname}-${pkgver}.tar.xz")
+sha256sums=('f292f6cc051d5bbabf725ef85d432dfeacc8711dd717ea97612ae590643801e5')
 
 build() {
   _variant=$1
