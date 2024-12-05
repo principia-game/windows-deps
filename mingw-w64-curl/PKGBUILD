@@ -3,7 +3,7 @@
 _realname=curl
 pkgbase=mingw-w64-${_realname}
 pkgname=${MINGW_PACKAGE_PREFIX}-${_realname}-winssl
-pkgver=8.9.1
+pkgver=8.11.0
 pkgrel=2
 pkgdesc="Command line tool and library for transferring data with URLs (mingw-w64)"
 arch=('any')
@@ -16,7 +16,7 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-cc"
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
          "${MINGW_PACKAGE_PREFIX}-zlib")
 source=("https://github.com/curl/curl/releases/download/${_realname}-${pkgver//./_}/${_realname}-${pkgver}.tar.xz")
-sha256sums=('f292f6cc051d5bbabf725ef85d432dfeacc8711dd717ea97612ae590643801e5')
+sha256sums=('db59cf0d671ca6e7f5c2c5ec177084a33a79e04c97e71cf183a5cdea235054eb')
 
 build() {
   _variant=$1
@@ -28,6 +28,7 @@ build() {
     "${MINGW_PREFIX}"/bin/cmake.exe ../curl-${pkgver} \
       -DCMAKE_INSTALL_PREFIX="${MINGW_PREFIX}" \
       -DCMAKE_DLL_NAME_WITH_SOVERSION=ON \
+      -DBUILD_{LIBCURL_DOCS,MISC_DOCS}=OFF \
       -DCURL_DISABLE_{ALTSVC,AWS,BASIC_AUTH,BEARER_AUTH,BINDLOCAL,DICT,DIGEST_AUTH,DOH,FTP,GOPHER,HSTS,IMAP,KERBEROS_AUTH,LDAP,LDAPS,MQTT,NEGOTIATE_AUTH,NTLM,PARSEDATE,POP3,RTSP,SMB,SMTP,SOCKETPAIR,SRP,TELNET,TFTP}=ON \
       -DCURL_USE_{LIBPSL,LIBSSH2}=OFF -DCURL_USE_SCHANNEL=ON -DUSE_LIBIDN2=OFF \
       -G Ninja
