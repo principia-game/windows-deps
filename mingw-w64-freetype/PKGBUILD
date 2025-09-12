@@ -4,11 +4,11 @@
 _realname=freetype
 pkgbase=mingw-w64-${_realname}
 pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
-pkgver=2.13.2
+pkgver=2.14.1
 pkgrel=1
 pkgdesc="TrueType font rendering library (mingw-w64)"
 arch=('any')
-mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
+mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clangarm64')
 url="https://www.freetype.org/"
 license=('spdx:GPL-2.0-or-later OR FTL')
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs"
@@ -20,7 +20,7 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-meson"
 source=(https://download-mirror.savannah.gnu.org/releases/freetype/freetype-${pkgver}.tar.xz
         freetype-2.10.0-enable-valid.patch
         freetype-2.10.0-enable-spr.patch)
-sha256sums=('12991c4e55c506dd7f9b765933e62fd2be2e06d421505d7950a132e4f1bb484d'
+sha256sums=('32427e8c471ac095853212a37aef816c60b42052d4d9e48230bab3bdf2936ccc'
             'SKIP'
             'SKIP')
 
